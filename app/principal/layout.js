@@ -5,6 +5,8 @@ import Sidebar from '../components/Sidebar';
 const PRINCIPAL_ITEMS = [
   { href: '/principal/attendance', label: 'Attendance' },
   { href: '/principal/grades', label: 'Grades Overview' },
+  { href: '/principal/comments', label: 'Report Comments' },
+  { href: '/principal/terms', label: 'Terms' },
   { href: '/principal/finance', label: 'Finance' },
   { href: '/principal/staff', label: 'Staff' },
 ];

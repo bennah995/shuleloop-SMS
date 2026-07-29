@@ -1,5 +1,8 @@
 import { pool } from '../../../../lib/db';
 import PDFDocument from 'pdfkit';
+import { markToGrade } from '../../../../lib/grading';
+import { getClassRanking } from '../../../../lib/ranking';
+import { renderReportCard } from '../../../../lib/report-card-renderer';
 
 export async function GET(request) {
   try {
@@ -11,24 +14,48 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const studentId = searchParams.get('studentId');
     const term = searchParams.get('term');
-
     if (!studentId || !term) {
       return Response.json({ error: 'studentId and term are required' }, { status: 400 });
     }
 
-    const studentRes = await pool.query(`SELECT name FROM students WHERE id = $1`, [studentId]);
+    const studentRes = await pool.query('SELECT name, class_id FROM students WHERE id = $1', [studentId]);
     if (studentRes.rows.length === 0) {
       return Response.json({ error: 'Student not found' }, { status: 404 });
     }
     const student = studentRes.rows[0];
 
-    const gradesRes = await pool.query(
-      `SELECT subject, score FROM grades WHERE student_id = $1 AND term = $2 ORDER BY subject`,
+    const classRes = await pool.query('SELECT name FROM classes WHERE id = $1', [student.class_id]);
+    const className = classRes.rows[0]?.name || '';
+
+    const subjectsRes = await pool.query(
+      `SELECT sub.name AS subject_name, sub.category, g.score
+       FROM student_subjects ss
+       JOIN subjects sub ON sub.id = ss.subject_id
+       LEFT JOIN grades g ON g.student_id = ss.student_id AND g.subject_id = sub.id AND g.term = $2
+       WHERE ss.student_id = $1
+       ORDER BY sub.category, sub.name`,
       [studentId, term]
     );
-    const grades = gradesRes.rows;
+    const subjects = subjectsRes.rows.map((r) => {
+      if (r.score === null) return { ...r, grade: '-', points: '-' };
+      const { grade, points } = markToGrade(r.score);
+      return { ...r, grade, points };
+    });
 
-    // Build the PDF into a buffer, then return it as a downloadable response
+    const scored = subjects.filter((s) => s.score !== null);
+    const average =
+      scored.length > 0 ? scored.reduce((sum, s) => sum + Number(s.score), 0) / scored.length : null;
+    const averageGrade = average !== null ? markToGrade(average).grade : '-';
+
+    const commentsRes = await pool.query(
+      'SELECT teacher_comment, principal_comment FROM report_comments WHERE student_id = $1 AND term = $2',
+      [studentId, term]
+    );
+    const comments = commentsRes.rows[0] || { teacher_comment: '', principal_comment: '' };
+
+    const ranking = await getClassRanking(student.class_id, term);
+    const studentRank = ranking.students.find((s) => s.studentId === Number(studentId));
+
     const chunks = [];
     const doc = new PDFDocument({ margin: 50 });
     doc.on('data', (chunk) => chunks.push(chunk));
@@ -36,28 +63,17 @@ export async function GET(request) {
     const pdfBuffer = await new Promise((resolve, reject) => {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
-
-      doc.fontSize(20).text('ShuleLoop Report Card', { align: 'center' });
-      doc.moveDown();
-      doc.fontSize(12).text(`Student: ${student.name}`);
-      doc.text(`Term: ${term}`);
-      doc.moveDown();
-
-      doc.fontSize(14).text('Subject Scores', { underline: true });
-      doc.moveDown(0.5);
-
-      if (grades.length === 0) {
-        doc.fontSize(12).text('No grades recorded for this term.');
-      } else {
-        grades.forEach((g) => {
-          doc.fontSize(12).text(`${g.subject}: ${g.score}/100`);
-        });
-
-        const average = grades.reduce((sum, g) => sum + Number(g.score), 0) / grades.length;
-        doc.moveDown();
-        doc.fontSize(12).text(`Average: ${average.toFixed(1)}/100`, { underline: true });
-      }
-
+      renderReportCard(doc, {
+        student,
+        className,
+        term,
+        subjects,
+        average,
+        averageGrade,
+        comments,
+        studentRank,
+        classAverage: ranking.classAverage,
+      });
       doc.end();
     });
 

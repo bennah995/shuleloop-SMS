@@ -56,3 +56,13 @@ CREATE TABLE notifications (
   status VARCHAR(20) DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE terms (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(20) NOT NULL,
+  year INTEGER NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(name, year)
+);
+CREATE UNIQUE INDEX one_active_term ON terms (is_active) WHERE is_active = TRUE;

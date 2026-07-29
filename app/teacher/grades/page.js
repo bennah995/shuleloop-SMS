@@ -1,23 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
-const TERM = 'Term 2 2026';
+import Link from 'next/link';
+import { useActiveTerm } from '../../hooks/useActiveTerm';
 
 export default function TeacherGradesPage() {
+  const term = useActiveTerm();
   const [classes, setClasses] = useState([]);
   const [classId, setClassId] = useState(null);
-  const [students, setStudents] = useState([]);
+  const [ranking, setRanking] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [gradeInputs, setGradeInputs] = useState({});
 
   useEffect(() => {
     loadClasses();
   }, []);
 
   useEffect(() => {
-    if (classId) loadStudents();
-  }, [classId]);
+    if (classId && term) loadRanking();
+  }, [classId, term]);
 
   async function loadClasses() {
     const res = await fetch('/api/classes');
@@ -26,35 +26,21 @@ export default function TeacherGradesPage() {
     if (data.classes?.length > 0) setClassId(data.classes[0].id);
   }
 
-  async function loadStudents() {
+  async function loadRanking() {
     setLoading(true);
-    const today = new Date().toISOString().slice(0, 10);
-    const res = await fetch(`/api/teacher/attendance?classId=${classId}&date=${today}`);
+    const res = await fetch(`/api/teacher/class-ranking?classId=${classId}&term=${encodeURIComponent(term)}`);
     const data = await res.json();
-    setStudents(data.students || []);
+    setRanking(data);
     setLoading(false);
   }
 
-  async function saveGrade(studentId) {
-    const subject = document.getElementById(`subject-${studentId}`).value;
-    const score = gradeInputs[`${studentId}-subj`];
-    if (!subject || !score) {
-      alert('Enter subject and score');
-      return;
-    }
-    await fetch('/api/teacher/grades', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ studentId, subject, term: TERM, score: Number(score) }),
-    });
-    alert('Grade saved');
-  }
+  if (!term) return <div className="p-6 text-sm text-[#64748B]">Loading...</div>;
 
   return (
     <div className="p-6">
-      <div className="bg-white border border-[#E2E8F0] rounded-lg p-6 max-w-2xl">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-medium text-[#1A3C5E]">Enter Grades — {TERM}</h2>
+      <div className="bg-white border border-[#E2E8F0] rounded-lg p-6 max-w-3xl">
+        <div className="flex items-center justify-between mb-4 gap-3">
+          <h2 className="text-base font-medium text-[#1A3C5E]">Grades — {term}</h2>
           <select
             value={classId || ''}
             onChange={(e) => setClassId(Number(e.target.value))}
@@ -66,47 +52,52 @@ export default function TeacherGradesPage() {
           </select>
         </div>
 
-        {loading ? (
+        {loading || !ranking ? (
           <p className="text-sm text-[#64748B]">Loading...</p>
-        ) : students.length === 0 ? (
-          <p className="text-sm text-[#94A3B8]">No students in this class yet.</p>
         ) : (
-          <div className="space-y-3">
-            {students.map((s) => (
-              <div key={s.student_id} className="flex items-center gap-2">
-                <span className="text-sm text-[#1E293B] w-32 truncate">{s.name}</span>
-                <input
-                  placeholder="Subject"
-                  id={`subject-${s.student_id}`}
-                  className="h-8 px-2 border border-[#CBD5E1] rounded-md text-sm w-28"
-                />
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  placeholder="Score"
-                  value={gradeInputs[`${s.student_id}-subj`] || ''}
-                  onChange={(e) =>
-                    setGradeInputs((prev) => ({ ...prev, [`${s.student_id}-subj`]: e.target.value }))
-                  }
-                  className="h-8 px-2 border border-[#CBD5E1] rounded-md text-sm w-20"
-                />
-                <button
-                  onClick={() => saveGrade(s.student_id)}
-                  className="h-8 px-3 bg-[#1A3C5E] text-white rounded-md text-xs font-medium"
+          <>
+            <div className="flex items-center gap-4 mb-4 text-sm">
+              <span className="text-[#64748B]">
+                Class Average: <span className="font-medium text-[#1A3C5E]">
+                  {ranking.classAverage !== null ? `${ranking.classAverage} (${ranking.classMeanGrade})` : '—'}
+                </span>
+              </span>
+            </div>
+
+            <div className="space-y-1 mb-6">
+              {ranking.students.map((s) => (
+                <Link
+                  key={s.studentId}
+                  href={`/teacher/grades/${s.studentId}`}
+                  className="flex items-center justify-between py-2 px-2 -mx-2 rounded-md border-b border-[#F1F5F9] last:border-0 hover:bg-[#F5F7FA]"
                 >
-                  Save
-                </button>
-                <a
-                  href={`/api/teacher/report-card?studentId=${s.student_id}&term=${encodeURIComponent(TERM)}`}
-                  target="_blank"
-                  className="text-xs text-[#1A3C5E] underline ml-1"
-                >
-                  Report card
-                </a>
-              </div>
-            ))}
-          </div>
+                  <span className="text-sm text-[#1E293B]">
+                    {s.position ? `${s.position}. ` : ''}{s.name}
+                  </span>
+                  <span className="text-xs text-[#64748B]">
+                    {s.average !== null ? `${s.average} (${s.grade})` : 'No grades yet'}
+                  </span>
+                </Link>
+              ))}
+            </div>
+
+            <div className="flex gap-2">
+              <a
+                href={`/api/teacher/class-report-cards?classId=${classId}&term=${encodeURIComponent(term)}`}
+                target="_blank"
+                className="px-3 h-9 flex items-center bg-[#1A3C5E] text-white rounded-md text-xs font-medium"
+              >
+                Download All Report Cards
+              </a>
+              <a
+                href={`/api/teacher/class-report?classId=${classId}&term=${encodeURIComponent(term)}`}
+                target="_blank"
+                className="px-3 h-9 flex items-center border border-[#1A3C5E] text-[#1A3C5E] rounded-md text-xs font-medium"
+              >
+                Download Class Report
+              </a>
+            </div>
+          </>
         )}
       </div>
     </div>
