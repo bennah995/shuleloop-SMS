@@ -3,8 +3,6 @@ import { pool } from '../../../../lib/db';
 export async function POST(request) {
   try {
     const role = request.headers.get('x-user-role');
-    const userId = request.headers.get('x-user-id');
-
     if (role !== 'teacher' && role !== 'principal') {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -25,8 +23,6 @@ export async function POST(request) {
       );
     }
 
-    // Upsert: if this student already has a record for this date, update it;
-    // otherwise insert a new one. Relies on the UNIQUE(student_id, date) constraint.
     const result = await pool.query(
       `INSERT INTO attendance (student_id, date, status)
        VALUES ($1, $2, $3)
@@ -59,10 +55,10 @@ export async function GET(request) {
     }
 
     const result = await pool.query(
-      `SELECT s.id AS student_id, s.name, a.status
+      `SELECT s.id AS student_id, s.name, s.admission_number, a.status
        FROM students s
        LEFT JOIN attendance a ON a.student_id = s.id AND a.date = $2
-       WHERE s.class_id = $1
+       WHERE s.class_id = $1 AND s.status = 'active'
        ORDER BY s.name`,
       [classId, date]
     );

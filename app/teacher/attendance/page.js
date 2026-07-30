@@ -90,7 +90,10 @@ export default function TeacherAttendancePage() {
           <div className="space-y-2">
             {students.map((s) => (
               <div key={s.student_id} className="flex items-center justify-between py-2 border-b border-[#F1F5F9] last:border-0">
-                <span className="text-sm text-[#1E293B]">{s.name}</span>
+                <span className="text-sm text-[#1E293B]">
+                  <span className="text-xs text-[#94A3B8] mr-2">#{s.admission_number ?? '—'}</span>
+                  {s.name}
+                </span>
                 <div className="flex gap-2 items-center">
                   <button
                     onClick={() => markAttendance(s.student_id, 'present')}

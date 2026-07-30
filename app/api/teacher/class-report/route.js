@@ -44,7 +44,7 @@ export async function GET(request) {
     const subjectList = subjectsRes.rows;
 
     const matrixRes = await pool.query(
-      `SELECT st.id AS student_id, st.name AS student_name,
+      `SELECT st.id AS student_id, st.name AS student_name, st.admission_number,
               sub.id AS subject_id,
               (ss.student_id IS NOT NULL) AS registered,
               g.score
@@ -52,16 +52,19 @@ export async function GET(request) {
        CROSS JOIN subjects sub
        LEFT JOIN student_subjects ss ON ss.student_id = st.id AND ss.subject_id = sub.id
        LEFT JOIN grades g ON g.student_id = st.id AND g.subject_id = sub.id AND g.term = $2
-       WHERE st.class_id = $1
+       WHERE st.class_id = $1 AND st.status = 'active'
        ORDER BY st.name`,
       [classId, term]
     );
 
-    // Build studentId -> { name, cells: { subjectId: 'N/A' | '-' | score } }
     const studentMap = new Map();
     for (const row of matrixRes.rows) {
       if (!studentMap.has(row.student_id)) {
-        studentMap.set(row.student_id, { name: row.student_name, cells: {} });
+        studentMap.set(row.student_id, {
+          name: row.student_name,
+          admissionNumber: row.admission_number,
+          cells: {},
+        });
       }
       const cell = !row.registered ? 'N/A' : row.score !== null ? String(Math.round(row.score)) : '-';
       studentMap.get(row.student_id).cells[row.subject_id] = cell;
@@ -85,63 +88,64 @@ export async function GET(request) {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      const nameW = 110;
-      const subjW = 38;
-      const statW = 45;
+      // Column layout: Pos | Adm# | Name | [subjects...] | Avg | Grade
+      const colWidths = [28, 45, 100, ...subjectList.map(() => 36), 40, 40];
       const startX = 30;
+      const rowH = 18;
+      const tableWidth = colWidths.reduce((a, b) => a + b, 0);
 
-      function drawHeader(y) {
-        doc.font('Helvetica-Bold').fontSize(8);
+      function colX(index) {
         let x = startX;
-        doc.text('Pos', x, y, { width: 25 });
-        x += 25;
-        doc.text('Name', x, y, { width: nameW });
-        x += nameW;
-        subjectList.forEach((s) => {
-          doc.text(abbreviate(s.name), x, y, { width: subjW, align: 'center' });
-          x += subjW;
-        });
-        doc.text('Avg', x, y, { width: statW, align: 'center' });
-        x += statW;
-        doc.text('Grade', x, y, { width: statW, align: 'center' });
-        doc.font('Helvetica');
-        return y + 16;
+        for (let i = 0; i < index; i++) x += colWidths[i];
+        return x;
       }
 
-      doc.fontSize(16).text('ShuleLoop Class Report', { align: 'center' });
+      function drawRow(values, y, opts = {}) {
+        const { bold = false, align = 'center' } = opts;
+        doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(7.5);
+        values.forEach((val, i) => {
+          const x = colX(i);
+          const w = colWidths[i];
+          doc.rect(x, y, w, rowH).stroke('#CBD5E1');
+          doc.fillColor('#1E293B').text(String(val), x + 2, y + 5, {
+            width: w - 4,
+            align: i === 2 ? 'left' : align, // name column left-aligned
+          });
+        });
+      }
+
+      doc.fontSize(16).fillColor('#1A3C5E').text('ShuleLoop Class Report', { align: 'center' });
       doc.moveDown(0.3);
-      doc.fontSize(10).text(`Class: ${className}  |  Term: ${term}`);
+      doc.fontSize(10).fillColor('#1E293B').text(`Class: ${className}  |  Term: ${term}`);
       if (ranking.classAverage !== null) {
         doc.text(`Class Average: ${ranking.classAverage} (${ranking.classMeanGrade})`);
       }
-      doc.fontSize(8).fillColor('#666').text('N/A = subject not taken   |   -  = not yet graded', { });
+      doc.fontSize(8).fillColor('#666').text('N/A = subject not taken   |   -  = not yet graded');
       doc.fillColor('#000');
       doc.moveDown(0.5);
 
       let y = doc.y;
-      y = drawHeader(y);
-      doc.moveTo(startX, y - 4).lineTo(startX + 25 + nameW + subjW * subjectList.length + statW * 2, y - 4).stroke();
+      const headerRow = ['Pos', 'Adm#', 'Name', ...subjectList.map((s) => abbreviate(s.name)), 'Avg', 'Grd'];
+      drawRow(headerRow, y, { bold: true });
+      y += rowH;
 
-      doc.fontSize(8);
       students.forEach((s) => {
         if (y > 500) {
           doc.addPage();
           y = 40;
-          y = drawHeader(y);
+          drawRow(headerRow, y, { bold: true });
+          y += rowH;
         }
-        let x = startX;
-        doc.text(s.rank?.position ? String(s.rank.position) : '-', x, y, { width: 25 });
-        x += 25;
-        doc.text(s.name, x, y, { width: nameW });
-        x += nameW;
-        subjectList.forEach((subj) => {
-          doc.text(s.cells[subj.id] || 'N/A', x, y, { width: subjW, align: 'center' });
-          x += subjW;
-        });
-        doc.text(s.rank?.average !== null && s.rank?.average !== undefined ? s.rank.average.toFixed(1) : '-', x, y, { width: statW, align: 'center' });
-        x += statW;
-        doc.text(s.rank?.grade || '-', x, y, { width: statW, align: 'center' });
-        y += 16;
+        const row = [
+          s.rank?.position ? String(s.rank.position) : '-',
+          s.admissionNumber ?? '—',
+          s.name,
+          ...subjectList.map((subj) => s.cells[subj.id] || 'N/A'),
+          s.rank?.average !== null && s.rank?.average !== undefined ? s.rank.average.toFixed(1) : '-',
+          s.rank?.grade || '-',
+        ];
+        drawRow(row, y);
+        y += rowH;
       });
 
       doc.end();

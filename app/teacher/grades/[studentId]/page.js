@@ -119,7 +119,9 @@ export default function StudentReportPage() {
       <div className="max-w-2xl space-y-6">
         <div>
           <h2 className="text-lg font-medium text-[#1A3C5E]">{student.name}</h2>
-          <p className="text-sm text-[#64748B]">{term}</p>
+          <p className="text-sm text-[#64748B]">
+            Admission #{student.admission_number ?? '—'} &middot; {term}
+          </p>
         </div>
 
         {!subjectsLoaded && (

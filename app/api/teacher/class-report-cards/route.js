@@ -22,7 +22,7 @@ export async function GET(request) {
     const className = classRes.rows[0]?.name || '';
 
     const studentsRes = await pool.query(
-      'SELECT id, name, class_id FROM students WHERE class_id = $1 ORDER BY name',
+      "SELECT id, name, class_id, admission_number FROM students WHERE class_id = $1 AND status = 'active' ORDER BY name",
       [classId]
     );
     const students = studentsRes.rows;

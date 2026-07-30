@@ -72,7 +72,9 @@ export default function TeacherGradesPage() {
                   className="flex items-center justify-between py-2 px-2 -mx-2 rounded-md border-b border-[#F1F5F9] last:border-0 hover:bg-[#F5F7FA]"
                 >
                   <span className="text-sm text-[#1E293B]">
-                    {s.position ? `${s.position}. ` : ''}{s.name}
+                    {s.position ? `${s.position}. ` : ''}
+                    <span className="text-xs text-[#94A3B8] mr-1">#{s.admissionNumber ?? '—'}</span>
+                    {s.name}
                   </span>
                   <span className="text-xs text-[#64748B]">
                     {s.average !== null ? `${s.average} (${s.grade})` : 'No grades yet'}

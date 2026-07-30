@@ -18,7 +18,10 @@ export async function GET(request) {
       return Response.json({ error: 'studentId and term are required' }, { status: 400 });
     }
 
-    const studentRes = await pool.query('SELECT name, class_id FROM students WHERE id = $1', [studentId]);
+    const studentRes = await pool.query(
+      'SELECT name, class_id, admission_number FROM students WHERE id = $1',
+      [studentId]
+    );
     if (studentRes.rows.length === 0) {
       return Response.json({ error: 'Student not found' }, { status: 404 });
     }

@@ -1,6 +1,4 @@
-// import { pool } from '../../../lib/db';
 import { pool } from '../../../../lib/db';
-// import { markToGrade } from '../../../../lib/grading';
 import { markToGrade } from '../../../../lib/grading';
 
 export async function GET(request) {
@@ -18,13 +16,13 @@ export async function GET(request) {
     }
 
     const result = await pool.query(
-      `SELECT st.id AS student_id, st.name,
+      `SELECT st.id AS student_id, st.name, st.admission_number,
               AVG(g.score)::numeric(5,2) AS average,
               COUNT(g.id) AS subjects_graded
        FROM students st
        LEFT JOIN grades g ON g.student_id = st.id AND g.term = $2
-       WHERE st.class_id = $1
-       GROUP BY st.id, st.name
+       WHERE st.class_id = $1 AND st.status = 'active'
+       GROUP BY st.id, st.name, st.admission_number
        ORDER BY average DESC NULLS LAST, st.name`,
       [classId, term]
     );
@@ -35,6 +33,7 @@ export async function GET(request) {
       return {
         studentId: r.student_id,
         name: r.name,
+        admissionNumber: r.admission_number,
         average: avg,
         grade: gradeInfo.grade,
         subjectsGraded: Number(r.subjects_graded),

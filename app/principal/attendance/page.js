@@ -8,9 +8,6 @@ export default function PrincipalAttendancePage() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAddStudent, setShowAddStudent] = useState(false);
-  const [newStudentName, setNewStudentName] = useState('');
-  const [addingStudent, setAddingStudent] = useState(false);
 
   useEffect(() => {
     loadClasses();
@@ -33,25 +30,6 @@ export default function PrincipalAttendancePage() {
     const data = await res.json();
     setStudents(data.students || []);
     setLoading(false);
-  }
-
-  async function addStudent() {
-    if (!newStudentName.trim()) return;
-    setAddingStudent(true);
-    const res = await fetch('/api/students', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newStudentName.trim(), classId }),
-    });
-    const data = await res.json();
-    setAddingStudent(false);
-    if (!res.ok) {
-      alert(data.error);
-      return;
-    }
-    setNewStudentName('');
-    setShowAddStudent(false);
-    await loadAttendance();
   }
 
   const presentCount = students.filter((s) => s.status === 'present').length;
@@ -102,12 +80,15 @@ export default function PrincipalAttendancePage() {
             </div>
 
             {students.length === 0 ? (
-              <p className="text-sm text-[#94A3B8] mb-4">No students in this class yet.</p>
+              <p className="text-sm text-[#94A3B8]">No students in this class yet.</p>
             ) : (
-              <div className="space-y-2 mb-4">
+              <div className="space-y-2">
                 {students.map((s) => (
                   <div key={s.student_id} className="flex items-center justify-between py-2 border-b border-[#F1F5F9] last:border-0">
-                    <span className="text-sm text-[#1E293B]">{s.name}</span>
+                    <span className="text-sm text-[#1E293B]">
+                      <span className="text-xs text-[#94A3B8] mr-2">#{s.admission_number ?? '—'}</span>
+                      {s.name}
+                    </span>
                     <span
                       className={`text-xs px-2 py-1 rounded-md font-medium ${
                         s.status === 'present'
@@ -123,41 +104,6 @@ export default function PrincipalAttendancePage() {
                 ))}
               </div>
             )}
-
-            <div className="border-t border-[#E2E8F0] pt-4">
-              {!showAddStudent ? (
-                <button
-                  onClick={() => setShowAddStudent(true)}
-                  className="text-xs px-3 h-8 border border-[#CBD5E1] rounded-md text-[#1A3C5E] hover:bg-[#F5F7FA]"
-                >
-                  + Add New Student
-                </button>
-              ) : (
-                <div className="flex gap-2">
-                  <input
-                    placeholder="Student full name"
-                    value={newStudentName}
-                    onChange={(e) => setNewStudentName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && addStudent()}
-                    className="flex-1 h-9 px-3 border border-[#CBD5E1] rounded-md text-sm"
-                    autoFocus
-                  />
-                  <button
-                    onClick={addStudent}
-                    disabled={addingStudent}
-                    className="px-4 h-9 bg-[#1A3C5E] text-white rounded-md text-sm font-medium disabled:opacity-60"
-                  >
-                    {addingStudent ? 'Adding...' : 'Add'}
-                  </button>
-                  <button
-                    onClick={() => { setShowAddStudent(false); setNewStudentName(''); }}
-                    className="px-3 h-9 text-sm text-[#64748B]"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
-            </div>
           </>
         )}
       </div>
