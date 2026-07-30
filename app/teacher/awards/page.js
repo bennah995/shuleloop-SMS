@@ -54,6 +54,16 @@ export default function TeacherAwardsPage() {
             </select>
           </div>
 
+          {!loading && data && (
+            <a
+              href={`/api/teacher/awards-pdf?classId=${classId}&term=${encodeURIComponent(term)}`}
+              target="_blank"
+              className="inline-block mb-4 px-3 h-9 leading-9 bg-[#1A3C5E] text-white rounded-md text-xs font-medium"
+            >
+              Download Awards PDF
+            </a>
+          )}
+
           {loading || !data ? (
             <p className="text-sm text-[#64748B]">Loading...</p>
           ) : (
