@@ -24,3 +24,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* inputs */
+
+input,
+select,
+textarea {
+  color: #1E293B;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94A3B8;
+}
+
+/* Date inputs specifically render their value text lighter by default
+   in Chrome/Edge on Windows — this forces the visible date text dark too */
+input[type="date"] {
+  color: #1E293B;
+}

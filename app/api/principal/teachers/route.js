@@ -16,10 +16,8 @@ export async function GET() {
 
 // POST /api/principal/teachers — create a teacher account
 // body: { name: 'Jane Doe', email: 'jane@maono.school' }
-// Returns the temp password ONCE in this response — the frontend must
-// show it in a "copy this now, it won't be shown again" dialog. It is
-// never stored in plaintext or returned by any other endpoint.
 export async function POST(request) {
+  const schoolId = request.headers.get('x-school-id');
   const { name, email } = await request.json();
 
   if (!name || !email) {
@@ -35,10 +33,10 @@ export async function POST(request) {
   const passwordHash = await bcrypt.hash(tempPassword, 10);
 
   const { rows } = await pool.query(
-    `INSERT INTO users (name, email, password_hash, role, is_active)
-     VALUES ($1, $2, $3, 'teacher', TRUE)
+    `INSERT INTO users (school_id, name, email, password_hash, role, is_active)
+     VALUES ($1, $2, $3, $4, 'teacher', TRUE)
      RETURNING id, name, email`,
-    [name.trim(), email.trim().toLowerCase(), passwordHash]
+    [schoolId, name.trim(), email.trim().toLowerCase(), passwordHash]
   );
 
   return NextResponse.json(

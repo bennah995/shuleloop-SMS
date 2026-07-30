@@ -3,6 +3,7 @@
 import Sidebar from '../components/Sidebar';
 
 const PRINCIPAL_ITEMS = [
+  { href: '/principal', label: 'Dashboard' },
   { href: '/principal/attendance', label: 'Attendance' },
   { href: '/principal/grades', label: 'Grades Overview' },
   { href: '/principal/comments', label: 'Report Comments' },
