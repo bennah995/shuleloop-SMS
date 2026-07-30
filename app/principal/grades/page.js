@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useActiveTerm } from '../../hooks/useActiveTerm';
 
 export default function PrincipalGradesPage() {
@@ -91,6 +92,12 @@ export default function PrincipalGradesPage() {
               >
                 Download Class Report
               </a>
+              <Link
+                href="/principal/awards"
+                className="px-3 h-9 flex items-center border border-[#F0A500] text-[#1A3C5E] rounded-md text-xs font-medium"
+              >
+                🏆 View Awards
+              </Link>
             </div>
           </>
         )}

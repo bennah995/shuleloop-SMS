@@ -5,6 +5,7 @@ import Sidebar from '../components/Sidebar';
 const TEACHER_ITEMS = [
   { href: '/teacher/attendance', label: 'Attendance' },
   { href: '/teacher/grades', label: 'Grades & Report Cards' },
+  { href: '/teacher/awards', label: 'Awards' },
   { href: '/teacher/notifications', label: 'Parent Notifications' },
 ];
 

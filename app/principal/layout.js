@@ -7,6 +7,7 @@ const PRINCIPAL_ITEMS = [
   { href: '/principal/students', label: 'Student Management' },
   { href: '/principal/attendance', label: 'Attendance' },
   { href: '/principal/grades', label: 'Grades Overview' },
+  { href: '/principal/awards', label: 'Awards' },
   { href: '/principal/comments', label: 'Report Comments' },
   { href: '/principal/terms', label: 'Terms' },
   { href: '/principal/finance', label: 'Finance' },

@@ -98,6 +98,12 @@ export default function TeacherGradesPage() {
               >
                 Download Class Report
               </a>
+              <Link
+                href="/teacher/awards"
+                className="px-3 h-9 flex items-center border border-[#F0A500] text-[#1A3C5E] rounded-md text-xs font-medium"
+              >
+                🏆 View Awards
+              </Link>
             </div>
           </>
         )}
