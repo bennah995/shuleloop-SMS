@@ -10,6 +10,11 @@ const PUBLIC_API_PREFIXES = ['/api/auth/login', '/api/admin/auth/login', '/api/p
 const FORCE_RESET_ALLOWED_PATHS = ['/change-password'];
 const FORCE_RESET_ALLOWED_API = ['/api/auth/change-password', '/api/auth/logout'];
 
+function noStore(response) {
+  response.headers.set('Cache-Control', 'no-store, must-revalidate');
+  return response;
+}
+
 export async function proxy(request) {
   const { pathname } = request.nextUrl;
 
@@ -34,7 +39,7 @@ export async function proxy(request) {
 
       const requestHeaders = new Headers(request.headers);
       requestHeaders.set('x-admin-id', String(payload.adminId));
-      return NextResponse.next({ request: { headers: requestHeaders } });
+      return noStore(NextResponse.next({ request: { headers: requestHeaders } }));
     } catch (err) {
       if (pathname.startsWith('/api/')) {
         return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
@@ -86,7 +91,7 @@ export async function proxy(request) {
     requestHeaders.set('x-user-role', payload.role);
     requestHeaders.set('x-school-id', String(payload.schoolId));
 
-    return NextResponse.next({ request: { headers: requestHeaders } });
+    return noStore(NextResponse.next({ request: { headers: requestHeaders } }));
   } catch (err) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
