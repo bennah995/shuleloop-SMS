@@ -36,12 +36,19 @@ export default function TeacherAttendancePage() {
 
   async function markAttendance(studentId, status) {
     setSavingId(studentId);
-    await fetch('/api/teacher/attendance', {
+    const res = await fetch('/api/teacher/attendance', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ studentId, date, status }),
     });
-    await loadAttendance();
+    if (res.ok) {
+      // Update just this student's row instead of reloading the whole roster
+      setStudents((prev) =>
+        prev.map((s) => (s.student_id === studentId ? { ...s, status } : s))
+      );
+    } else {
+      alert('Failed to save attendance — try again.');
+    }
     setSavingId(null);
   }
 
