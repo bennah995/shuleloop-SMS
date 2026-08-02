@@ -3,14 +3,43 @@ import { jwtVerify } from 'jose';
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET);
 
+const PUBLIC_PATHS = ['/', '/login', '/signup', '/admin/login'];
+const PUBLIC_API_PREFIXES = ['/api/auth/login', '/api/admin/auth/login', '/api/public/'];
+
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
-  // Public routes — no auth needed
-  if (pathname === '/login' || pathname.startsWith('/api/auth/login')) {
+  if (PUBLIC_PATHS.includes(pathname) || PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
+  // ---- Platform admin area: entirely separate auth, no school scoping ----
+  if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
+    const adminToken = request.cookies.get('shuleloop_admin_session')?.value;
+
+    if (!adminToken) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+
+    try {
+      const { payload } = await jwtVerify(adminToken, secret);
+      if (!payload.isPlatformAdmin) throw new Error('Not a platform admin token');
+
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set('x-admin-id', String(payload.adminId));
+      return NextResponse.next({ request: { headers: requestHeaders } });
+    } catch (err) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+  }
+
+  // ---- Normal school-scoped app (principal/teacher) ----
   const token = request.cookies.get('shuleloop_session')?.value;
 
   if (!token) {
@@ -23,7 +52,6 @@ export async function middleware(request) {
   try {
     const { payload } = await jwtVerify(token, secret);
 
-    // Role-based route protection
     if (pathname.startsWith('/principal') || pathname.startsWith('/api/principal')) {
       if (payload.role !== 'principal') {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -36,7 +64,6 @@ export async function middleware(request) {
       }
     }
 
-    // Attach user info to request headers so API routes can read it
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-user-id', String(payload.userId));
     requestHeaders.set('x-user-role', payload.role);

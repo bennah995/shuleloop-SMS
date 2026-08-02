@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
 
-// PATCH /api/principal/teachers/:id — toggle active/inactive
-// body: { isActive: false }
+// PATCH /api/principal/teachers/:id — toggle active/inactive, scoped to the requesting school
 export async function PATCH(request, { params }) {
+  const schoolId = request.headers.get('x-school-id');
   const { id } = await params;
   const { isActive } = await request.json();
 
@@ -13,9 +13,9 @@ export async function PATCH(request, { params }) {
 
   const { rows } = await pool.query(
     `UPDATE users SET is_active = $1
-     WHERE id = $2 AND role = 'teacher'
+     WHERE id = $2 AND role = 'teacher' AND school_id = $3
      RETURNING id, name, email, is_active`,
-    [isActive, id]
+    [isActive, id, schoolId]
   );
 
   if (rows.length === 0) {

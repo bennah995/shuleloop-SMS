@@ -67,12 +67,20 @@ export default function Home() {
             <a href="#about" className="hover:text-[#1A3C5E]">About</a>
           </div>
 
-          <Link
-            href="/login"
-            className="rounded-lg bg-[#1A3C5E] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#16324F]"
-          >
-            Login
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/login"
+              className="text-sm font-medium text-[#1A3C5E] hover:text-[#16324F]"
+            >
+              Login
+            </Link>
+            <Link
+              href="/signup"
+              className="rounded-lg bg-[#1A3C5E] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#16324F]"
+            >
+              Get Started
+            </Link>
+          </div>
         </div>
       </nav>
 
@@ -95,9 +103,9 @@ export default function Home() {
             actually run.
           </p>
 
-          <div className="mt-10 flex flex-wrap gap-4">
+          <div className="mt-10 flex flex-wrap items-center gap-4">
             <Link
-              href="/login"
+              href="/signup"
               className="rounded-lg bg-[#1A3C5E] px-7 py-3 font-medium text-white transition hover:bg-[#16324F]"
             >
               Get Started
@@ -109,6 +117,13 @@ export default function Home() {
               Learn More
             </a>
           </div>
+
+          <p className="mt-6 text-sm text-[#64748B]">
+            Already a member?{" "}
+            <Link href="/login" className="font-medium text-[#1A3C5E] hover:underline">
+              Login here
+            </Link>
+          </p>
         </div>
 
         {/* Dashboard Preview */}
@@ -222,12 +237,20 @@ export default function Home() {
             Attendance, grading, and report cards — all in one place, built
             for your school.
           </p>
-          <Link
-            href="/login"
-            className="mt-10 inline-flex rounded-lg bg-white px-8 py-3 font-medium text-[#1A3C5E] transition hover:bg-slate-100"
-          >
-            Login to ShuleLoop
-          </Link>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+            <Link
+              href="/signup"
+              className="inline-flex rounded-lg bg-white px-8 py-3 font-medium text-[#1A3C5E] transition hover:bg-slate-100"
+            >
+              Get Started
+            </Link>
+            <Link
+              href="/login"
+              className="inline-flex rounded-lg border border-white/30 px-8 py-3 font-medium text-white transition hover:bg-white/10"
+            >
+              Already a member? Login
+            </Link>
+          </div>
         </div>
       </section>
 

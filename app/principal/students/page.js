@@ -8,6 +8,10 @@ export default function StudentManagementPage() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [showAddClass, setShowAddClass] = useState(false);
+  const [newClassName, setNewClassName] = useState('');
+  const [addingClass, setAddingClass] = useState(false);
+
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [newStudentName, setNewStudentName] = useState('');
   const [addingStudent, setAddingStudent] = useState(false);
@@ -26,6 +30,7 @@ export default function StudentManagementPage() {
 
   useEffect(() => {
     if (classId) loadStudents();
+    else setStudents([]);
   }, [classId]);
 
   async function loadClasses() {
@@ -33,6 +38,27 @@ export default function StudentManagementPage() {
     const data = await res.json();
     setClasses(data.classes || []);
     if (data.classes?.length > 0) setClassId(data.classes[0].id);
+    setLoading(false);
+  }
+
+  async function addClass() {
+    if (!newClassName.trim()) return;
+    setAddingClass(true);
+    const res = await fetch('/api/classes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newClassName.trim() }),
+    });
+    const data = await res.json();
+    setAddingClass(false);
+    if (!res.ok) {
+      alert(data.error);
+      return;
+    }
+    setNewClassName('');
+    setShowAddClass(false);
+    await loadClasses();
+    setClassId(data.class.id);
   }
 
   async function loadStudents() {
@@ -69,7 +95,7 @@ export default function StudentManagementPage() {
   }
 
   async function addStudent() {
-    if (!newStudentName.trim()) return;
+    if (!newStudentName.trim() || !classId) return;
     setAddingStudent(true);
     const res = await fetch('/api/students', {
       method: 'POST',
@@ -136,18 +162,59 @@ export default function StudentManagementPage() {
       <div className="bg-white border border-[#E2E8F0] rounded-lg p-6 max-w-2xl">
         <div className="flex items-center justify-between mb-4 gap-3">
           <h2 className="text-base font-medium text-[#1A3C5E]">Student Management</h2>
-          <select
-            value={classId || ''}
-            onChange={(e) => setClassId(Number(e.target.value))}
-            className="h-9 px-3 border border-[#CBD5E1] rounded-md text-sm"
-          >
-            {classes.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+          {classes.length > 0 && (
+            <select
+              value={classId || ''}
+              onChange={(e) => setClassId(Number(e.target.value))}
+              className="h-9 px-3 border border-[#CBD5E1] rounded-md text-sm"
+            >
+              {classes.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          )}
         </div>
 
-        {loading ? (
+        {/* Add Class — always visible so a brand-new school can get started */}
+        <div className="mb-4 pb-4 border-b border-[#E2E8F0]">
+          {classes.length === 0 && (
+            <p className="text-sm text-[#94A3B8] mb-2">No classes yet — add one to get started.</p>
+          )}
+          {!showAddClass ? (
+            <button
+              onClick={() => setShowAddClass(true)}
+              className="text-xs px-3 h-8 border border-[#CBD5E1] rounded-md text-[#1A3C5E] hover:bg-[#F5F7FA]"
+            >
+              + Add New Class
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                placeholder="e.g. Form 1, Grade 5 Blue"
+                value={newClassName}
+                onChange={(e) => setNewClassName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addClass()}
+                className="flex-1 h-9 px-3 border border-[#CBD5E1] rounded-md text-sm"
+                autoFocus
+              />
+              <button
+                onClick={addClass}
+                disabled={addingClass}
+                className="px-4 h-9 bg-[#1A3C5E] text-white rounded-md text-sm font-medium disabled:opacity-60"
+              >
+                {addingClass ? 'Adding...' : 'Add Class'}
+              </button>
+              <button
+                onClick={() => { setShowAddClass(false); setNewClassName(''); }}
+                className="px-3 h-9 text-sm text-[#64748B]"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+
+        {classes.length === 0 ? null : loading ? (
           <p className="text-sm text-[#64748B]">Loading...</p>
         ) : students.length === 0 ? (
           <p className="text-sm text-[#94A3B8] mb-4">No students in this class yet.</p>
@@ -164,96 +231,100 @@ export default function StudentManagementPage() {
           </div>
         )}
 
-        {/* Add Student */}
-        <div className="border-t border-[#E2E8F0] pt-4 space-y-3">
-          {nextAdmissionNumber === 1 ? (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-[#64748B]">
-                First time setup — continue your existing admission numbering from:
-              </span>
-              <input
-                type="number"
-                value={counterInput}
-                onChange={(e) => setCounterInput(e.target.value)}
-                placeholder="e.g. 6799"
-                className="w-24 h-7 px-2 border border-[#CBD5E1] rounded-md text-xs"
-              />
-              <button onClick={saveAdmissionCounter} className="underline text-[#1A3C5E]">
-                Set (one-time)
+        {classes.length > 0 && (
+          <>
+            {/* Add Student */}
+            <div className="border-t border-[#E2E8F0] pt-4 space-y-3">
+              {nextAdmissionNumber === 1 ? (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-[#64748B]">
+                    First time setup — continue your existing admission numbering from:
+                  </span>
+                  <input
+                    type="number"
+                    value={counterInput}
+                    onChange={(e) => setCounterInput(e.target.value)}
+                    placeholder="e.g. 6799"
+                    className="w-24 h-7 px-2 border border-[#CBD5E1] rounded-md text-xs"
+                  />
+                  <button onClick={saveAdmissionCounter} className="underline text-[#1A3C5E]">
+                    Set (one-time)
+                  </button>
+                </div>
+              ) : (
+                <p className="text-xs text-[#64748B]">
+                  Next admission number: <span className="font-medium text-[#1A3C5E]">{nextAdmissionNumber ?? '...'}</span>
+                </p>
+              )}
+
+              {!showAddStudent ? (
+                <button
+                  onClick={() => setShowAddStudent(true)}
+                  className="text-xs px-3 h-8 border border-[#CBD5E1] rounded-md text-[#1A3C5E] hover:bg-[#F5F7FA]"
+                >
+                  + Add New Student
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    placeholder="Student full name"
+                    value={newStudentName}
+                    onChange={(e) => setNewStudentName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addStudent()}
+                    className="flex-1 h-9 px-3 border border-[#CBD5E1] rounded-md text-sm"
+                    autoFocus
+                  />
+                  <button
+                    onClick={addStudent}
+                    disabled={addingStudent}
+                    className="px-4 h-9 bg-[#1A3C5E] text-white rounded-md text-sm font-medium disabled:opacity-60"
+                  >
+                    {addingStudent ? 'Adding...' : 'Add'}
+                  </button>
+                  <button
+                    onClick={() => { setShowAddStudent(false); setNewStudentName(''); }}
+                    className="px-3 h-9 text-sm text-[#64748B]"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Promotion / Graduation */}
+            <div className="border-t border-[#E2E8F0] pt-4 mt-4 space-y-3">
+              <p className="text-xs font-medium text-[#475569]">End of Year: Promote or Graduate This Class</p>
+
+              <div className="flex gap-2 items-center">
+                <select
+                  value={promoteToId}
+                  onChange={(e) => setPromoteToId(e.target.value)}
+                  className="h-9 px-3 border border-[#CBD5E1] rounded-md text-sm"
+                >
+                  <option value="">Promote to class...</option>
+                  {otherClasses.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={promoteClass}
+                  disabled={promoting || !promoteToId}
+                  className="px-3 h-9 bg-[#1A3C5E] text-white rounded-md text-xs font-medium disabled:opacity-60"
+                >
+                  {promoting ? 'Promoting...' : 'Promote Class'}
+                </button>
+              </div>
+
+              <button
+                onClick={graduateClass}
+                disabled={graduating}
+                className="px-3 h-9 border border-red-300 text-red-600 rounded-md text-xs font-medium hover:bg-red-50 disabled:opacity-60"
+              >
+                {graduating ? 'Graduating...' : 'Graduate This Class (Form 4 leavers)'}
               </button>
             </div>
-          ) : (
-            <p className="text-xs text-[#64748B]">
-              Next admission number: <span className="font-medium text-[#1A3C5E]">{nextAdmissionNumber ?? '...'}</span>
-            </p>
-          )}
-
-          {!showAddStudent ? (
-            <button
-              onClick={() => setShowAddStudent(true)}
-              className="text-xs px-3 h-8 border border-[#CBD5E1] rounded-md text-[#1A3C5E] hover:bg-[#F5F7FA]"
-            >
-              + Add New Student
-            </button>
-          ) : (
-            <div className="flex gap-2">
-              <input
-                placeholder="Student full name"
-                value={newStudentName}
-                onChange={(e) => setNewStudentName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addStudent()}
-                className="flex-1 h-9 px-3 border border-[#CBD5E1] rounded-md text-sm"
-                autoFocus
-              />
-              <button
-                onClick={addStudent}
-                disabled={addingStudent}
-                className="px-4 h-9 bg-[#1A3C5E] text-white rounded-md text-sm font-medium disabled:opacity-60"
-              >
-                {addingStudent ? 'Adding...' : 'Add'}
-              </button>
-              <button
-                onClick={() => { setShowAddStudent(false); setNewStudentName(''); }}
-                className="px-3 h-9 text-sm text-[#64748B]"
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Promotion / Graduation */}
-        <div className="border-t border-[#E2E8F0] pt-4 mt-4 space-y-3">
-          <p className="text-xs font-medium text-[#475569]">End of Year: Promote or Graduate This Class</p>
-
-          <div className="flex gap-2 items-center">
-            <select
-              value={promoteToId}
-              onChange={(e) => setPromoteToId(e.target.value)}
-              className="h-9 px-3 border border-[#CBD5E1] rounded-md text-sm"
-            >
-              <option value="">Promote to class...</option>
-              {otherClasses.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-            <button
-              onClick={promoteClass}
-              disabled={promoting || !promoteToId}
-              className="px-3 h-9 bg-[#1A3C5E] text-white rounded-md text-xs font-medium disabled:opacity-60"
-            >
-              {promoting ? 'Promoting...' : 'Promote Class'}
-            </button>
-          </div>
-
-          <button
-            onClick={graduateClass}
-            disabled={graduating}
-            className="px-3 h-9 border border-red-300 text-red-600 rounded-md text-xs font-medium hover:bg-red-50 disabled:opacity-60"
-          >
-            {graduating ? 'Graduating...' : 'Graduate This Class (Form 4 leavers)'}
-          </button>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );

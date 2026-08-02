@@ -3,19 +3,20 @@ import bcrypt from 'bcrypt';
 import { pool } from '@/lib/db';
 import { generateTempPassword } from '@/lib/temp-password';
 
-// GET /api/principal/teachers — staff list (active first)
-export async function GET() {
+// GET /api/principal/teachers — staff list for THIS school only
+export async function GET(request) {
+  const schoolId = request.headers.get('x-school-id');
   const { rows } = await pool.query(
     `SELECT id, name, email, is_active
      FROM users
-     WHERE role = 'teacher'
-     ORDER BY is_active DESC, name ASC`
+     WHERE role = 'teacher' AND school_id = $1
+     ORDER BY is_active DESC, name ASC`,
+    [schoolId]
   );
   return NextResponse.json({ teachers: rows });
 }
 
-// POST /api/principal/teachers — create a teacher account
-// body: { name: 'Jane Doe', email: 'jane@maono.school' }
+// POST /api/principal/teachers — create a teacher account for THIS school
 export async function POST(request) {
   const schoolId = request.headers.get('x-school-id');
   const { name, email } = await request.json();
@@ -39,8 +40,5 @@ export async function POST(request) {
     [schoolId, name.trim(), email.trim().toLowerCase(), passwordHash]
   );
 
-  return NextResponse.json(
-    { teacher: rows[0], tempPassword },
-    { status: 201 }
-  );
+  return NextResponse.json({ teacher: rows[0], tempPassword }, { status: 201 });
 }
