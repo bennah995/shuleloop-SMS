@@ -12,6 +12,7 @@ const PRINCIPAL_ITEMS = [
   { href: '/principal/terms', label: 'Terms' },
   { href: '/principal/finance', label: 'Finance' },
   { href: '/principal/staff', label: 'Staff' },
+  { href: '/principal/settings', label: 'Settings' },
 ];
 
 export default function PrincipalLayout({ children }) {

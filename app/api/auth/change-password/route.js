@@ -6,14 +6,14 @@ import { cookies } from 'next/headers';
 export async function POST(request) {
   try {
     const userId = request.headers.get('x-user-id');
-    const { newPassword } = await request.json();
+    const { currentPassword, newPassword } = await request.json();
 
     if (!newPassword || newPassword.length < 8) {
-      return Response.json({ error: 'Password must be at least 8 characters' }, { status: 400 });
+      return Response.json({ error: 'New password must be at least 8 characters' }, { status: 400 });
     }
 
     const userRes = await pool.query(
-      'SELECT id, school_id, name, email, role FROM users WHERE id = $1',
+      'SELECT id, school_id, name, email, role, password_hash, must_change_password FROM users WHERE id = $1',
       [userId]
     );
     if (userRes.rows.length === 0) {
@@ -21,14 +21,25 @@ export async function POST(request) {
     }
     const user = userRes.rows[0];
 
+    // Skip current-password verification only during a forced first-login
+    // reset (they just proved knowledge of the temp password via login).
+    // Any voluntary change from Settings must verify it.
+    if (!user.must_change_password) {
+      if (!currentPassword) {
+        return Response.json({ error: 'Current password is required' }, { status: 400 });
+      }
+      const valid = await bcrypt.compare(currentPassword, user.password_hash);
+      if (!valid) {
+        return Response.json({ error: 'Current password is incorrect' }, { status: 401 });
+      }
+    }
+
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await pool.query(
       'UPDATE users SET password_hash = $1, must_change_password = FALSE WHERE id = $2',
       [passwordHash, userId]
     );
 
-    // Reissue the session JWT without the mustChangePassword flag,
-    // otherwise the old token keeps forcing the redirect until it expires.
     const token = jwt.sign(
       {
         userId: user.id,

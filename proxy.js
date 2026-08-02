@@ -10,7 +10,7 @@ const PUBLIC_API_PREFIXES = ['/api/auth/login', '/api/admin/auth/login', '/api/p
 const FORCE_RESET_ALLOWED_PATHS = ['/change-password'];
 const FORCE_RESET_ALLOWED_API = ['/api/auth/change-password', '/api/auth/logout'];
 
-export async function middleware(request) {
+export async function proxy(request) {
   const { pathname } = request.nextUrl;
 
   if (PUBLIC_PATHS.includes(pathname) || PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p))) {

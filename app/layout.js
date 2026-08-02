@@ -16,7 +16,7 @@ export const metadata = {
   description:
     "A modern School Management System for managing students, teachers, attendance, examinations, fee management, and communication.",
   icons: {
-    icon: "/icon.png", // or "/favicon.ico"
+    icon: "/logo.png", // or "/favicon.ico"
     shortcut: "/logo.png",
     apple: "/logo.png",
   },

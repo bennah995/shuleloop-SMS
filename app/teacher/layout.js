@@ -7,6 +7,7 @@ const TEACHER_ITEMS = [
   { href: '/teacher/grades', label: 'Grades & Report Cards' },
   { href: '/teacher/awards', label: 'Awards' },
   { href: '/teacher/notifications', label: 'Parent Notifications' },
+  { href: '/teacher/settings', label: 'Settings' },
 ];
 
 export default function TeacherLayout({ children }) {
