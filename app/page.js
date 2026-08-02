@@ -53,8 +53,6 @@ const roles = [
 
 export default function Home() {
   return (
-    <>
-    <Analytics />
     <main className="min-h-screen bg-[#F8FAFC]">
       {/* ================= NAVBAR ================= */}
       <nav className="sticky top-0 z-50 border-b border-[#E2E8F0] bg-white/90 backdrop-blur">
@@ -273,6 +271,5 @@ export default function Home() {
         </div>
       </footer>
     </main>
-    </>
   );
 }
