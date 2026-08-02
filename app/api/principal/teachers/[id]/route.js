@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
 
-// PATCH /api/principal/teachers/:id — toggle active/inactive, scoped to the requesting school
+// PATCH /api/principal/teachers/:id — toggle active/inactive, scoped to THIS school only
 export async function PATCH(request, { params }) {
   const schoolId = request.headers.get('x-school-id');
   const { id } = await params;

@@ -27,8 +27,8 @@ export async function POST(request, { params }) {
       tempPassword = generateTempPassword();
       const passwordHash = await bcrypt.hash(tempPassword, 10);
       await pool.query(
-        `INSERT INTO users (school_id, name, email, password_hash, role, is_active)
-         VALUES ($1, $2, $3, $4, 'principal', TRUE)`,
+        `INSERT INTO users (school_id, name, email, password_hash, role, is_active, must_change_password)
+         VALUES ($1, $2, $3, $4, 'principal', TRUE, TRUE)`,
         [id, school.contact_name || school.name, school.contact_email, passwordHash]
       );
     }

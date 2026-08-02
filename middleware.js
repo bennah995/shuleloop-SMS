@@ -6,6 +6,10 @@ const secret = new TextEncoder().encode(process.env.JWT_SECRET);
 const PUBLIC_PATHS = ['/', '/login', '/signup', '/admin/login'];
 const PUBLIC_API_PREFIXES = ['/api/auth/login', '/api/admin/auth/login', '/api/public/'];
 
+// Allowed even while a forced password reset is pending
+const FORCE_RESET_ALLOWED_PATHS = ['/change-password'];
+const FORCE_RESET_ALLOWED_API = ['/api/auth/change-password', '/api/auth/logout'];
+
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
@@ -51,6 +55,19 @@ export async function middleware(request) {
 
   try {
     const { payload } = await jwtVerify(token, secret);
+
+    // Force password reset before anything else, except the reset flow itself
+    if (payload.mustChangePassword) {
+      const allowed =
+        FORCE_RESET_ALLOWED_PATHS.includes(pathname) ||
+        FORCE_RESET_ALLOWED_API.some((p) => pathname.startsWith(p));
+      if (!allowed) {
+        if (pathname.startsWith('/api/')) {
+          return NextResponse.json({ error: 'Password change required' }, { status: 403 });
+        }
+        return NextResponse.redirect(new URL('/change-password', request.url));
+      }
+    }
 
     if (pathname.startsWith('/principal') || pathname.startsWith('/api/principal')) {
       if (payload.role !== 'principal') {

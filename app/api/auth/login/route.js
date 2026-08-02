@@ -12,7 +12,8 @@ export async function POST(request) {
     }
 
     const result = await pool.query(
-      `SELECT id, school_id, name, email, password_hash, role, is_active FROM users WHERE email = $1`,
+      `SELECT id, school_id, name, email, password_hash, role, is_active, must_change_password
+       FROM users WHERE email = $1`,
       [email]
     );
 
@@ -35,7 +36,13 @@ export async function POST(request) {
     }
 
     const token = jwt.sign(
-      { userId: user.id, schoolId: user.school_id, role: user.role, name: user.name },
+      {
+        userId: user.id,
+        schoolId: user.school_id,
+        role: user.role,
+        name: user.name,
+        mustChangePassword: user.must_change_password,
+      },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -50,7 +57,13 @@ export async function POST(request) {
     });
 
     return Response.json({
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        mustChangePassword: user.must_change_password,
+      },
     });
   } catch (err) {
     console.error('Login error:', err);

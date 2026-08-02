@@ -3,7 +3,6 @@ import bcrypt from 'bcrypt';
 import { pool } from '@/lib/db';
 import { generateTempPassword } from '@/lib/temp-password';
 
-// GET /api/principal/teachers — staff list for THIS school only
 export async function GET(request) {
   const schoolId = request.headers.get('x-school-id');
   const { rows } = await pool.query(
@@ -16,7 +15,6 @@ export async function GET(request) {
   return NextResponse.json({ teachers: rows });
 }
 
-// POST /api/principal/teachers — create a teacher account for THIS school
 export async function POST(request) {
   const schoolId = request.headers.get('x-school-id');
   const { name, email } = await request.json();
@@ -34,8 +32,8 @@ export async function POST(request) {
   const passwordHash = await bcrypt.hash(tempPassword, 10);
 
   const { rows } = await pool.query(
-    `INSERT INTO users (school_id, name, email, password_hash, role, is_active)
-     VALUES ($1, $2, $3, $4, 'teacher', TRUE)
+    `INSERT INTO users (school_id, name, email, password_hash, role, is_active, must_change_password)
+     VALUES ($1, $2, $3, $4, 'teacher', TRUE, TRUE)
      RETURNING id, name, email`,
     [schoolId, name.trim(), email.trim().toLowerCase(), passwordHash]
   );
