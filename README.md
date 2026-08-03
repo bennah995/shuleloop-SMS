@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# ShuleLoop
 
-## Getting Started
+School management system for Kenyan secondary schools, built around the real 8-4-4 / KCSE structure. Multi-tenant SaaS — each school gets its own account; Digistar Tech operates a platform admin console to approve and manage onboarded schools.
 
-First, run the development server:
+Built by [Digistar Tech](https://github.com/bennah995), piloted with Maono School.
+
+## Features
+
+- **Attendance** — mark present/absent per class/date, notify parents on absence
+- **KCSE Grading** — real subject structure (5 compulsory + Physics + 2 humanities + 1 technical), auto-computed grades and points on the standard A–E scale
+- **Report Cards** — individual and bulk-class PDF generation, with teacher + principal comments and class ranking
+- **Awards** — top 3 overall and top scorer per subject, per class, downloadable as PDF
+- **Admissions** — sequential admission numbers, continuing from a school's existing numbering
+- **Student Management** — add students, promote a class forward, graduate Form 4 leavers
+- **Staff Management** — add teacher accounts with one-time temp passwords, activate/deactivate
+- **Terms** — one active term per school, set by the principal
+- **Platform Admin Console** — Digistar-internal area to review school signups, approve/reject, suspend/reactivate, view platform-wide stats
+
+## Tech stack
+
+- Next.js 16 (App Router, JavaScript)
+- PostgreSQL
+- Tailwind CSS
+- `pdfkit` for PDF generation
+- JWT (`jose` in middleware, `jsonwebtoken` in routes) for auth, `bcrypt` for password hashing
+
+## Local setup
+
+```bash
+npm install
+```
+
+Create `.env.local`:
+```
+DATABASE_URL=postgresql://user:password@localhost:5432/shuleloop_dev
+JWT_SECRET=<random 32-byte hex string>
+```
+
+Run all migrations in `db/` against your database (in the order they were added — see commit history), then seed base data:
+```bash
+node db/seed.js
+node db/seed-subjects.js
+node db/seed-terms.js
+node db/seed-platform-admin.js   # edit the email/password inside first
+```
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Roles
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- **Platform Admin** (`/admin/login`) — Digistar Tech only, manages schools
+- **Principal** (`/login`) — full access to their school
+- **Teacher** (`/login`) — attendance, grading, comments for their classes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deployment
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Hosted on Vercel, database on Neon. Environment variables (`DATABASE_URL`, `JWT_SECRET`) are set in the Vercel project dashboard.

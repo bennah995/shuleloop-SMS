@@ -218,7 +218,7 @@ export default function AdminSchoolsPage() {
         </div>
       )}
 
-      {/* Toast — replaces alert() for simple confirmations/errors */}
+      {/* Toast — for simple confirmations/errors */}
       {toast && (
         <div
           className={`fixed bottom-6 right-6 px-4 py-3 rounded-md text-sm font-medium shadow-lg ${

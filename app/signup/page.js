@@ -60,8 +60,7 @@ export default function SignupPage() {
         <div className="max-w-md text-center">
           <h1 className="text-2xl font-medium text-[#1A3C5E] mb-2">Application received</h1>
           <p className="text-sm text-[#64748B]">
-            We'll review your school's application and get back to you at the email you provided. Once
-            approved, your school will go live at {subdomain}.shuleloop.ac.ke.
+            We'll review your school's application and get back to you at the email you provided.
           </p>
         </div>
       </div>
@@ -116,16 +115,16 @@ export default function SignupPage() {
           </div>
           <div>
             <label className="block text-xs font-medium text-[#475569] mb-1.5">Preferred subdomain</label>
-            <div className="flex items-center gap-2">
-              <input
-                value={subdomain}
-                onChange={(e) => setSubdomain(e.target.value.toLowerCase())}
-                required
-                className="flex-1 h-10 px-3 border border-[#CBD5E1] rounded-md text-sm text-[#1E293B]"
-                placeholder="greenwood"
-              />
-              <span className="text-sm text-[#64748B]">.shuleloop.ac.ke</span>
-            </div>
+            <input
+              value={subdomain}
+              onChange={(e) => setSubdomain(e.target.value.toLowerCase())}
+              required
+              className="w-full h-10 px-3 border border-[#CBD5E1] rounded-md text-sm text-[#1E293B]"
+              placeholder="greenwood"
+            />
+            <p className="text-xs text-[#94A3B8] mt-1">
+              This will become your school's dedicated web address once available.
+            </p>
             {checking && <p className="text-xs text-[#94A3B8] mt-1">Checking availability...</p>}
             {!checking && availability && availability.available && (
               <p className="text-xs text-green-600 mt-1">✓ Available</p>

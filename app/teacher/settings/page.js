@@ -27,6 +27,7 @@ function EyeToggle({ show, onClick }) {
 }
 
 export default function SettingsPage() {
+  const [expanded, setExpanded] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -73,68 +74,84 @@ export default function SettingsPage() {
 
   return (
     <div className="p-6">
-      <div className="bg-white border border-[#E2E8F0] rounded-lg p-6 max-w-sm">
-        <h2 className="text-base font-medium text-[#1A3C5E] mb-4">Change Password</h2>
-
-        {error && (
-          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">
-            Password updated.
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-xs font-medium text-[#475569] mb-1.5">Current password</label>
-            <div className="relative">
-              <input
-                type={showCurrent ? 'text' : 'password'}
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                required
-                className="w-full h-10 pl-3 pr-10 border border-[#CBD5E1] rounded-md text-sm text-[#1E293B] outline-none focus:border-[#1A3C5E]"
-              />
-              <EyeToggle show={showCurrent} onClick={() => setShowCurrent((v) => !v)} />
-            </div>
-          </div>
-          <div className="mb-4">
-            <label className="block text-xs font-medium text-[#475569] mb-1.5">New password</label>
-            <div className="relative">
-              <input
-                type={showNew ? 'text' : 'password'}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                className="w-full h-10 pl-3 pr-10 border border-[#CBD5E1] rounded-md text-sm text-[#1E293B] outline-none focus:border-[#1A3C5E]"
-              />
-              <EyeToggle show={showNew} onClick={() => setShowNew((v) => !v)} />
-            </div>
-          </div>
-          <div className="mb-6">
-            <label className="block text-xs font-medium text-[#475569] mb-1.5">Confirm new password</label>
-            <div className="relative">
-              <input
-                type={showConfirm ? 'text' : 'password'}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                className="w-full h-10 pl-3 pr-10 border border-[#CBD5E1] rounded-md text-sm text-[#1E293B] outline-none focus:border-[#1A3C5E]"
-              />
-              <EyeToggle show={showConfirm} onClick={() => setShowConfirm((v) => !v)} />
-            </div>
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="h-10 px-5 bg-[#1A3C5E] text-white rounded-md text-sm font-medium hover:bg-[#15324f] disabled:opacity-60"
+      <div className="bg-white border border-[#E2E8F0] rounded-lg max-w-sm overflow-hidden">
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="w-full flex items-center justify-between px-6 py-4 text-left"
+        >
+          <span className="text-sm font-medium text-[#1A3C5E]">Change Password</span>
+          <svg
+            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            strokeLinecap="round" strokeLinejoin="round"
+            className={`text-[#94A3B8] transition-transform ${expanded ? 'rotate-180' : ''}`}
           >
-            {loading ? 'Saving...' : 'Update Password'}
-          </button>
-        </form>
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+
+        {expanded && (
+          <div className="px-6 pb-6 border-t border-[#F1F5F9] pt-4">
+            {error && (
+              <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">
+                Password updated.
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label className="block text-xs font-medium text-[#475569] mb-1.5">Current password</label>
+                <div className="relative">
+                  <input
+                    type={showCurrent ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    required
+                    className="w-full h-10 pl-3 pr-10 border border-[#CBD5E1] rounded-md text-sm text-[#1E293B] outline-none focus:border-[#1A3C5E]"
+                  />
+                  <EyeToggle show={showCurrent} onClick={() => setShowCurrent((v) => !v)} />
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="block text-xs font-medium text-[#475569] mb-1.5">New password</label>
+                <div className="relative">
+                  <input
+                    type={showNew ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    className="w-full h-10 pl-3 pr-10 border border-[#CBD5E1] rounded-md text-sm text-[#1E293B] outline-none focus:border-[#1A3C5E]"
+                  />
+                  <EyeToggle show={showNew} onClick={() => setShowNew((v) => !v)} />
+                </div>
+              </div>
+              <div className="mb-6">
+                <label className="block text-xs font-medium text-[#475569] mb-1.5">Confirm new password</label>
+                <div className="relative">
+                  <input
+                    type={showConfirm ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    className="w-full h-10 pl-3 pr-10 border border-[#CBD5E1] rounded-md text-sm text-[#1E293B] outline-none focus:border-[#1A3C5E]"
+                  />
+                  <EyeToggle show={showConfirm} onClick={() => setShowConfirm((v) => !v)} />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="h-10 px-5 bg-[#1A3C5E] text-white rounded-md text-sm font-medium hover:bg-[#15324f] disabled:opacity-60"
+              >
+                {loading ? 'Saving...' : 'Update Password'}
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );
