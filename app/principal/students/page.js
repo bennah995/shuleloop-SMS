@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import AddStudentModal from './AddStudentModal';
 
 export default function StudentManagementPage() {
   const [classes, setClasses] = useState([]);
@@ -12,9 +13,7 @@ export default function StudentManagementPage() {
   const [newClassName, setNewClassName] = useState('');
   const [addingClass, setAddingClass] = useState(false);
 
-  const [showAddStudent, setShowAddStudent] = useState(false);
-  const [newStudentName, setNewStudentName] = useState('');
-  const [addingStudent, setAddingStudent] = useState(false);
+  const [showAddStudentModal, setShowAddStudentModal] = useState(false);
 
   const [nextAdmissionNumber, setNextAdmissionNumber] = useState(null);
   const [counterInput, setCounterInput] = useState('');
@@ -94,22 +93,7 @@ export default function StudentManagementPage() {
     setNextAdmissionNumber(data.nextAdmissionNumber);
   }
 
-  async function addStudent() {
-    if (!newStudentName.trim() || !classId) return;
-    setAddingStudent(true);
-    const res = await fetch('/api/students', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newStudentName.trim(), classId }),
-    });
-    const data = await res.json();
-    setAddingStudent(false);
-    if (!res.ok) {
-      alert(data.error);
-      return;
-    }
-    setNewStudentName('');
-    setShowAddStudent(false);
+  async function handleStudentAdded() {
     await loadStudents();
     await loadAdmissionCounter();
   }
@@ -257,38 +241,12 @@ export default function StudentManagementPage() {
                 </p>
               )}
 
-              {!showAddStudent ? (
-                <button
-                  onClick={() => setShowAddStudent(true)}
-                  className="text-xs px-3 h-8 border border-[#CBD5E1] rounded-md text-[#1A3C5E] hover:bg-[#F5F7FA]"
-                >
-                  + Add New Student
-                </button>
-              ) : (
-                <div className="flex gap-2">
-                  <input
-                    placeholder="Student full name"
-                    value={newStudentName}
-                    onChange={(e) => setNewStudentName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && addStudent()}
-                    className="flex-1 h-9 px-3 border border-[#CBD5E1] rounded-md text-sm"
-                    autoFocus
-                  />
-                  <button
-                    onClick={addStudent}
-                    disabled={addingStudent}
-                    className="px-4 h-9 bg-[#1A3C5E] text-white rounded-md text-sm font-medium disabled:opacity-60"
-                  >
-                    {addingStudent ? 'Adding...' : 'Add'}
-                  </button>
-                  <button
-                    onClick={() => { setShowAddStudent(false); setNewStudentName(''); }}
-                    className="px-3 h-9 text-sm text-[#64748B]"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
+              <button
+                onClick={() => setShowAddStudentModal(true)}
+                className="text-xs px-3 h-8 border border-[#CBD5E1] rounded-md text-[#1A3C5E] hover:bg-[#F5F7FA]"
+              >
+                + Add New Student
+              </button>
             </div>
 
             {/* Promotion / Graduation */}
@@ -326,6 +284,14 @@ export default function StudentManagementPage() {
           </>
         )}
       </div>
+
+      {showAddStudentModal && (
+        <AddStudentModal
+          classes={classes}
+          onClose={() => setShowAddStudentModal(false)}
+          onSuccess={handleStudentAdded}
+        />
+      )}
     </div>
   );
 }
